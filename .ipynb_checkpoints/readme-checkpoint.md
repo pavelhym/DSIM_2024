@@ -3,8 +3,18 @@
 
 This repository contains the files for the course project.
 
-Currently the UI of project can be reached by this [link](https://signal.trplai.com/)
+## Intro
 
+This project is composed of 3 parts:
+* Voice emotion recognition with CNN model
+* Panorama stiching for more than 2 images
+* DCGAN training for cars images generation
+
+Currently the UI of project can be reached by this [link](https://signal.trplai.com/).
+Data for voice classification is taken from [here](https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio).
+Data of car images for DCGAN is taken from [here](https://www.kaggle.com/datasets/jessicali9530/stanford-cars-dataset).
+
+## Instalation
 You can build docker image from by:
 
 ```bash
@@ -23,24 +33,32 @@ Or alternatively you can run streamlit UI from your command promt with all requi
 streamlit run dashboard.py
 ```
 
-The structure of project folders is:
+## Repo structure
+Main folder contains these files:
+* `dashboard.py` - python code for streamlit application
+* `Dockerfile` - dockerfile for image building
 
-
-## gan  ##
+The code is logically splitted for next subfolders:
+### gan  ###
 
 * `DSIM_gan.ipynb` - notebook with training process of gan, the training was run in the colab
 * `ganfunc.py` - functions to build the dash graphs
 * `generator.pth` - weights for torch generator
 
-## panorama  ##
+### panorama  ###
 
 The folder contains fucntions and utilities for panorama in UI:
 
 * `panorama.py` - functions to build panorama.
 * `plots.py` - functions to generate plots
 
-## voice  ##
+### voice  ###
 * `cnn_model.joblib` - saved model for voice classification
+* `data_augmentation.py` - move files to folders by the tone of voice
+* `cnn_training.py` - training of the classification model
+* `data_retrieving.py` - get data from kaggle
+* `feature_extraction.py` - extract features from audio data
+
 
 
 

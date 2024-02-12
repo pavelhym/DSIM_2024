@@ -22,7 +22,8 @@ import tempfile
 
 from panorama.src import panorama 
 from panorama.src import plots 
-
+import librosa
+import keras
 from streamlit_mic_recorder import mic_recorder
 from voice.audiofunc import predict
 from voice.audiofunc import detect
@@ -171,17 +172,41 @@ elif selected == 'Voice emotion':
     st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Voice emotion detection</p>', unsafe_allow_html=True)
 
 
-    st.write("Record your voice, play the recorded audio and predict the emotion:")
-
-    audio=mic_recorder(key='recorder')
-    if audio:
-      st.audio(audio['bytes'])
-      if st.button('Predict Emotion'):
-        audio_array = np.frombuffer(audio['bytes'], dtype=np.int16)
-        result = predict(audio=audio_array, sr=audio['sample_rate'])
-        st.write(f"You are {detect(result)}!")
+    temp_dir_aud_obj = tempfile.TemporaryDirectory()
+    temp_dir_aud = temp_dir_aud_obj.name
 
 
+
+    upload_audio = st.selectbox(
+   "How would you like to upload photos?",
+   ("Files", "Microphone"),
+   index=1)
+
+    if upload_audio == 'Microphone':
+    
+        st.write("Record your voice, play the recorded audio and predict the emotion:")
+    
+        audio=mic_recorder(key='recorder')
+        if audio:
+          st.audio(audio['bytes'])
+          if st.button('Predict Emotion'):
+            audio_array = np.frombuffer(audio['bytes'], dtype=np.int16)
+            result = predict(audio=audio_array, sr=audio['sample_rate'])
+            st.write(f"You are {detect(result)}!")
+
+    elif upload_audio == 'Files':
+        st.write("Upload audio and predict the emotion:")
+        audio = st.file_uploader("Upload audio", accept_multiple_files=False, type = ["wav", "mp3"])
+        if audio is not None:
+            st.audio(audio)
+            with open(os.path.join(temp_dir_aud,audio.name),"wb") as f: 
+                f.write(audio.getbuffer())         
+        
+
+        if st.button('Predict Emotion'):
+            audio, sr = librosa.load(f'{temp_dir_aud}/{audio.name}')
+            result = predict(audio=audio, sr=sr)
+            st.subheader(f"You are {detect(result)}!")
 
 
 elif selected == 'Image warp':
