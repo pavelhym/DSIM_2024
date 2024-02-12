@@ -42,7 +42,10 @@ The folder contains fucntions and utilities for panorama in UI:
 ## voice  ##
 * `cnn_model.joblib` - saved model for voice classification
 * `audios` - couples of samples used for training the model (entire dataset can be seen at the following [link](https://drive.google.com/drive/folders/1NWc7uNXmKP--r3JiFZf5HRuQ43qCcmir?usp=drive_link))
-* `cnn_training.py` - file with training process of the model, the training was run in the colab
+* `cnn_training.py` - code for the training process of the model, the training was run in the colab
+* `data_retrieving.py` -  code for the retrieving of the audios from Kaggle
+* `data_augmentation.py` - code for the augmentation of the audio files
+* `feature_extraction.py` - code for extracting the feature from the audio files
 
 
 
