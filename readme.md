@@ -12,9 +12,10 @@ This project is composed of 3 parts:
 
 Currently the UI of project can be reached by this [link](https://signal.trplai.com/).
 Data for voice classification is taken from [here](https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio).
+
 Data of car images for DCGAN is taken from [here](https://www.kaggle.com/datasets/jessicali9530/stanford-cars-dataset).
 
-## Instalation
+## Installation
 You can build docker image from by:
 
 ```bash
