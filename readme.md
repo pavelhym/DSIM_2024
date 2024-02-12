@@ -41,6 +41,7 @@ The folder contains fucntions and utilities for panorama in UI:
 
 ## voice  ##
 * `cnn_model.joblib` - saved model for voice classification
+* `audios` - couples of samples used for training the model (entire dataset can be seen at the following link [link](https://drive.google.com/drive/folders/1NWc7uNXmKP--r3JiFZf5HRuQ43qCcmir?usp=drive_link)
 
 
 
