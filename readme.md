@@ -40,20 +40,20 @@ Main folder contains these files:
 * `dashboard.py` - python code for streamlit application
 * `Dockerfile` - dockerfile for image building
 
-The code is logically splitted for next subfolders:
+The code is logically splitted into next subfolders:
 ### gan  ###
 
 * `DSIM_gan.ipynb` - notebook with training process of gan, the training was run in the colab
 * `ganfunc.py` - functions to build the dash graphs
 * `generator.pth` - weights for torch generator
 
-### panorama  ###
+### panorama/src  ###
 
-The folder contains fucntions and utilities for panorama in UI:
+The folder contains functions and utilities for panorama in UI:
 
 * `panorama.py` - functions to build panorama.
 * `plots.py` - functions to generate plots
-
+* `test.ipynb` - jupyter notebook to test panorama creation
 ### voice  ###
 * `cnn_model.joblib` - saved model for voice classification
 * `data_augmentation.py` - move files to folders by the tone of voice
