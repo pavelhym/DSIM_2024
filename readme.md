@@ -62,5 +62,9 @@ The folder contains functions and utilities for panorama in UI:
 * `feature_extraction.py` - extract features from audio data
 
 
+## Demonstration  
+
+
+![til](https://github.com/pavelhym/DSIM_2024/blob/main/demonstration.gif)
 
 
