@@ -71,7 +71,7 @@ def find_homography(src_keypoints, dest_keypoints):
 
     return H
 
-def ransac_transform(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, max_trials=5000, residual_threshold=3, return_matches=False):
+def ransac_tr(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, max_trials=5000, residual_threshold=3, return_matches=False):
 
 
     matches = match_descriptors(src_descriptors, dest_descriptors)

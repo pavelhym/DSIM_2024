@@ -331,7 +331,7 @@ elif selected == 'Image warp':
             src_keypoints, src_descriptors = panoramafunc.find_keypoints(src)
             dest_keypoints, dest_descriptors = panoramafunc.find_keypoints(dest)
     
-            robust_transform, matches = panoramafunc.ransac_transform(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
+            robust_transform, matches = panoramafunc.ransac_tr(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
     
             plots.plot_inliers(src, dest, src_keypoints, dest_keypoints, matches)
     
@@ -341,7 +341,7 @@ elif selected == 'Image warp':
     
             keypoints, descriptors = zip(*(panoramafunc.find_keypoints(img) for img in pano_image_collection))
 
-            forward_transforms = tuple(panoramafunc.ransac_transform(sorc_kp, src_desc, dest_kp, dest_desc)
+            forward_transforms = tuple(panoramafunc.ransac_tr(sorc_kp, src_desc, dest_kp, dest_desc)
                                         for sorc_kp, src_desc, dest_kp, dest_desc
                                         in zip(keypoints[:-1], descriptors[:-1], keypoints[1:], descriptors[1:]))
     
