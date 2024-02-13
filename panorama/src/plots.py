@@ -26,7 +26,7 @@ def save_plot(filename):
 
 
 
-def plot_inliers(src, dest, src_keypoints, dest_keypoints, matches):
+def plot_inliers(src, dest, src_keypoints, dest_keypoints, matches, streamlit = True):
     plt.close()
     plt.figure(figsize=FIGSIZE)
     ax = plt.axes()
@@ -35,10 +35,13 @@ def plot_inliers(src, dest, src_keypoints, dest_keypoints, matches):
     plot_matches(ax, src, dest, src_keypoints, dest_keypoints,
                  matches)
     plt.tight_layout()
-    show_plot()
+    if streamlit:
+        show_plot()
+    else:
+        plt.show()
 
 
-def plot_warps(corners, output_shape=None, min_coords=None, max_coords=None, img=None):
+def plot_warps(corners, output_shape=None, min_coords=None, max_coords=None, img=None,  streamlit = True):
     plt.close()
     np.random.seed(0)
     plt.figure(figsize=(15, 5))
@@ -60,19 +63,25 @@ def plot_warps(corners, output_shape=None, min_coords=None, max_coords=None, img
     plt.axis('off')
     plt.title('Border visualization')
     plt.tight_layout()
-    show_plot()
+    if streamlit:
+        show_plot()
+    else:
+        plt.show()
 
 
 
 
 
-def plot_result( result):
+def plot_result( result,  streamlit = True):
     plt.close()
     plt.figure(figsize=FIGSIZE)
     plt.imshow(result)
     plt.axis('off')
     plt.tight_layout()
-    show_plot()
+    if streamlit:
+        show_plot()
+    else:
+        plt.show()
 
 
 

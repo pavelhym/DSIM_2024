@@ -20,7 +20,7 @@ from streamlit_extras.switch_page_button import switch_page
 from PIL import Image
 import tempfile
 
-from panorama.src import panorama 
+from panorama.src import panoramafunc 
 from panorama.src import plots 
 import librosa
 import keras
@@ -191,8 +191,8 @@ elif selected == 'Voice emotion':
           st.audio(audio['bytes'])
           if st.button('Predict Emotion'):
             audio_array = np.frombuffer(audio['bytes'], dtype=np.int16)
-            result = predict(audio=audio_array, sr=audio['sample_rate'])
-            st.write(f"You are {detect(result)}!")
+            result_pano = predict(audio=audio_array, sr=audio['sample_rate'])
+            st.write(f"You are {detect(result_pano)}!")
 
     elif upload_audio == 'Files':
         st.write("Upload audio and predict the emotion:")
@@ -205,8 +205,8 @@ elif selected == 'Voice emotion':
 
         if st.button('Predict Emotion'):
             audio, sr = librosa.load(f'{temp_dir_aud}/{audio.name}')
-            result = predict(audio=audio, sr=sr)
-            st.subheader(f"You are {detect(result)}!")
+            result_pano = predict(audio=audio, sr=sr)
+            st.subheader(f"You are {detect(result_pano)}!")
 
 
 elif selected == 'Image warp':
@@ -315,74 +315,71 @@ elif selected == 'Image warp':
         if center_button:
             st.session_state['camera_dis'] = True
             # ------------------------------------------------------------------------------------------
-            # Part 0
+            # get pano images
             # ------------------------------------------------------------------------------------------
       
             # Create an ImageCollection from the uploaded images
             pano_image_collection = io.ImageCollection(f"{chosen_dir}/*",load_func=lambda f: io.imread(f).astype(np.float64) / 255)
     
+
     
             # ------------------------------------------------------------------------------------------
-            # Part 1
-            # ------------------------------------------------------------------------------------------
-    
-            img = pano_image_collection[0]
-            keypoints, descriptors = panorama.find_orb(img)
-    
-    
-            # ------------------------------------------------------------------------------------------
-            # Part 2 and 3
+            # example with 2 images descriptors
             # ------------------------------------------------------------------------------------------
     
             src, dest = pano_image_collection[0], pano_image_collection[1]
-            src_keypoints, src_descriptors = panorama.find_orb(src)
-            dest_keypoints, dest_descriptors = panorama.find_orb(dest)
+            src_keypoints, src_descriptors = panoramafunc.find_keypoints(src)
+            dest_keypoints, dest_descriptors = panoramafunc.find_keypoints(dest)
     
-            robust_transform, matches = panorama.ransac_transform(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
+            robust_transform, matches = panoramafunc.ransac_transform(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
     
             plots.plot_inliers(src, dest, src_keypoints, dest_keypoints, matches)
     
             # ------------------------------------------------------------------------------------------
-            # Part 4
+            # point and descriptors for all images pairs
             # ------------------------------------------------------------------------------------------
     
-            keypoints, descriptors = zip(*(panorama.find_orb(img) for img in pano_image_collection))
-            forward_transforms = tuple(panorama.ransac_transform(src_kp, src_desc, dest_kp, dest_desc)
-                                        for src_kp, src_desc, dest_kp, dest_desc
+            keypoints, descriptors = zip(*(panoramafunc.find_keypoints(img) for img in pano_image_collection))
+
+            forward_transforms = tuple(panoramafunc.ransac_transform(sorc_kp, src_desc, dest_kp, dest_desc)
+                                        for sorc_kp, src_desc, dest_kp, dest_desc
                                         in zip(keypoints[:-1], descriptors[:-1], keypoints[1:], descriptors[1:]))
     
-    
-    
-    
-    
-            simple_center_warps = panorama.find_simple_center_warps(forward_transforms)
-            corners = np.flip(tuple(panorama.get_corners(pano_image_collection, simple_center_warps)), axis= None)
-            min_coords, max_coords = panorama.get_min_max_coords(corners)
-            center_img = pano_image_collection[(len(pano_image_collection) - 1) // 2]
-    
-            plots.plot_warps( corners, min_coords=min_coords, max_coords=max_coords, img=center_img)
-    
-            final_center_warps, output_shape = panorama.get_final_center_warps(pano_image_collection, simple_center_warps)
-            corners = np.flip(tuple(panorama.get_corners(pano_image_collection, final_center_warps)), axis= None)
-    
-    
             # ------------------------------------------------------------------------------------------
-            # Part 5
+            # Merge and find borders
+            # ------------------------------------------------------------------------------------------    
+    
+    
+    
+            simple_center_warps = panoramafunc.find_center_warps(forward_transforms)
+            corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, simple_center_warps)), axis= None)
+            min_coords, max_coords = panoramafunc.get_min_max_coords(corners)
+            central_img = pano_image_collection[ (len(pano_image_collection) - 1) // 2]
+    
+            plots.plot_warps(corners, min_coords=min_coords, max_coords=max_coords, img=central_img)
+
+            # ------------------------------------------------------------------------------------------
+            # Get final wrap
             # ------------------------------------------------------------------------------------------
     
-            result = panorama.merge_pano(pano_image_collection, final_center_warps, output_shape)
+            final_central_warps, output_shape = panoramafunc.get_final_center_warps(pano_image_collection, simple_center_warps)
+            corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, final_central_warps)), axis= None)
     
-            plots.plot_result( result)
+    
+            result_pano = panoramafunc.merge_final_pano(pano_image_collection, final_central_warps, output_shape)
+    
+            plots.plot_result(result_pano)
     
             # ------------------------------------------------------------------------------------------
-            # Part 6
+            # Get smoothed pano
             # ------------------------------------------------------------------------------------------
     
             img = pano_image_collection[0]
     
-            result = panorama.gaussian_merge_pano(pano_image_collection, final_center_warps, output_shape)
+            result_pano_smth = panoramafunc.gaussian_merging_pano(pano_image_collection, final_central_warps, output_shape)
     
-            plots.plot_result(result)
+            plots.plot_result(result_pano_smth)
+            
             temp_dir_obj.cleanup()
             if "taken_images" in st.session_state:
                 del st.session_state['taken_images']

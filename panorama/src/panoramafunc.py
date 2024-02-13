@@ -9,7 +9,7 @@ from numpy.linalg import inv
 DEFAULT_TRANSFORM = ProjectiveTransform
 
 
-def find_orb(img, n_keypoints=200):
+def find_keypoints(img, n_keypoints=200):
 
     img_gray = rgb2gray(img)
 
@@ -110,7 +110,7 @@ def ransac_transform(src_keypoints, src_descriptors, dest_keypoints, dest_descri
     return ProjectiveTransform(best_H)
     
 
-def find_simple_center_warps(forward_transforms):
+def find_center_warps(forward_transforms):
 
     image_count = len(forward_transforms) + 1
     center_index = (image_count - 1) // 2
@@ -182,7 +182,7 @@ def warp_image(image, transform, output_shape):
     return img_wrap, mask_wrap
 
 
-def merge_pano(image_collection, final_center_warps, output_shape):
+def merge_final_pano(image_collection, final_center_warps, output_shape):
 
     result = np.zeros(np.append(output_shape, 3))
     result_mask = np.zeros(output_shape, dtype=np.bool8)
@@ -194,27 +194,27 @@ def merge_pano(image_collection, final_center_warps, output_shape):
     return result
 
 
-def get_gaussian_pyramid(image, n_layers=4, sigma=10):
+def get_gaussian_pyramid(image, layers=4, sigma=10):
 
     if image.dtype != 'float':
         image = image / 255
 
-    G = [None] * n_layers
+    G = [None] * layers
     G[0] = image
     
-    for i in range(1, n_layers):
+    for i in range(1, layers):
         G[i] = gaussian(G[i - 1], sigma=sigma)
 
     return tuple(G)
     
 
-def get_laplacian_pyramid(image, n_layers=4, sigma=10):
+def get_laplacian_pyramid(image, layers=4, sigma=10):
 
 
     if image.dtype != 'float':
         image = image / 255
     
-    G = get_gaussian_pyramid(image, n_layers, sigma)
+    G = get_gaussian_pyramid(image, layers, sigma)
     L = [None] * len(G)
     L[-1] = G[-1]
 
@@ -229,7 +229,7 @@ def get_laplacian_pyramid(image, n_layers=4, sigma=10):
 
 
 
-def gaussian_merge_pano(image_collection, final_center_warps, output_shape, n_layers=3, image_sigma=1, merge_sigma=10):
+def gaussian_merging_pano(image_collection, final_center_warps, output_shape, n_layers=3, image_sigma=1, merge_sigma=10):
 
     result = np.zeros(output_shape + (3,))
     result_mask = np.zeros(output_shape, dtype='float64')
