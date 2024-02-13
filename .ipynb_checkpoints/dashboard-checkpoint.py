@@ -136,13 +136,13 @@ with st.sidebar:
 
 
 if (selected == 'Welcome page'):
-    st.markdown('<p style="font-family: Pragmatica; font-size: 75px;">Digital signal Project</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-family: Pragmatica; font-size: 75px;">DSIM 2024 Project</p>', unsafe_allow_html=True)
 
 
 
     st.markdown(
             """
-            ## Digital image and Signal processing :
+            ## Project's parts:
             **Voice emotion**
             - Detect the emotion of your voice
             
