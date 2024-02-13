@@ -212,57 +212,198 @@ elif selected == 'Voice emotion':
 elif selected == 'Image warp':
     st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Image warp online</p>', unsafe_allow_html=True)
     #with tempfile.TemporaryDirectory() as temp_dir :
-    temp_dir_obj = tempfile.TemporaryDirectory()
-    temp_dir = temp_dir_obj.name
-    chosen_dir = temp_dir
-    if "camera_dis" not in st.session_state.keys():
-        st.session_state['camera_dis'] = False
 
+    private_tab, common_tab = st.tabs(["Private photos", "Common photos"])
 
-    upload_option = st.selectbox(
-   "How would you like to upload photos?",
-   ("Files", "Camera"),
-   index=1)
+    with private_tab:
+        
+        temp_dir_obj = tempfile.TemporaryDirectory()
+        temp_dir = temp_dir_obj.name
+        chosen_dir = temp_dir
+        if "camera_dis" not in st.session_state.keys():
+            st.session_state['camera_dis'] = False
     
-    if 'time' not in st.session_state:
-        st.session_state['time'] =  str(int(time.time()))
-        #os.mkdir(f"panorama/{st.session_state['time']}")
-        #temp_folder = f"panorama/{st.session_state['time']}"
-    def find_imgs(folder):
-        files = os.listdir(folder)
-        images = [x for x in files if ".jpg" in x]
-        images.sort()
-        return images
+    
+        upload_option = st.selectbox(
+       "How would you like to upload photos?",
+       ("Files", "Camera"),
+       index=1, key = 1)
         
-        
-    if upload_option == "Camera":
-        dir_option = st.selectbox(
-           "Common photos or private?",
-           ("Private", "Common"),
-           index=0)
-        if dir_option == "Private":
+        if 'time' not in st.session_state:
+            st.session_state['time'] =  str(int(time.time()))
+            #os.mkdir(f"panorama/{st.session_state['time']}")
+            #temp_folder = f"panorama/{st.session_state['time']}"
+        def find_imgs(folder):
+            files = os.listdir(folder)
+            images = [x for x in files if ".jpg" in x]
+            images.sort()
+            return images
             
-    
-            picture = st.camera_input("Take a picture", disabled=st.session_state['camera_dis'])
-    
+            
+        if upload_option == "Camera":
+
+            
+                
+        
+            picture = st.camera_input("Take a picture", disabled=st.session_state['camera_dis'], key = 2)
+        
             if "image_counter" not in st.session_state:
                 st.session_state['image_counter'] = 0
             if "taken_images" not in st.session_state:
                 st.session_state['taken_images'] = []
     
-        
+            
             if picture:
                 st.session_state['taken_images'].append(picture)
             for i,picture in enumerate(st.session_state['taken_images']):
                 with open(os.path.join(temp_dir,f"{i}.jpg"),"wb") as f: 
                     f.write(picture.getbuffer())         
                 st.session_state['image_counter'] += 1
-            #st.write(os.listdir(temp_dir))
-
+                #st.write(os.listdir(temp_dir))
+                
+    
+        elif upload_option == "Files" :
+            uploaded_files = st.file_uploader("Upload images", accept_multiple_files=True, key = 40)
+            for picture in uploaded_files:
+                with open(os.path.join(temp_dir,picture.name),"wb") as f: 
+                    f.write(picture.getbuffer())         
+                
+    
         
-        elif dir_option == "Common":
-            chosen_dir = "panorama/tempDir"
-            picture_com = st.camera_input("Take a picture", disabled=False)
+    
+
+        st.subheader("Private photos")
+        st.write(f":red[{len(find_imgs(temp_dir))}] :frame_with_picture:")
+
+        if len(find_imgs(temp_dir)) > 0:
+
+            if st.button('Show images', key = 3):
+                columns = st.columns(len(find_imgs(temp_dir)))
+                for i, col in enumerate(columns):
+                    with col:
+                        st.image(f'panorama/tempDir/{find_imgs(temp_dir)[i]}')
+            if st.button('Delete all', key = 4):
+                directory_path = temp_dir
+                try:
+                    delete_files(directory_path)
+                except:
+                    pass
+
+    
+    
+        if len(find_imgs(chosen_dir)) >= 2:
+            c1, col_main, c3 = st.columns(3)
+            with c1:
+                pass
+            with col_main:
+                center_button = st.button('Lets warp!', key = 5)
+            with c3:
+                pass
+            if center_button:
+                st.session_state['camera_dis'] = True
+                # ------------------------------------------------------------------------------------------
+                # get pano images
+                # ------------------------------------------------------------------------------------------
+          
+                # Create an ImageCollection from the uploaded images
+                pano_image_collection = io.ImageCollection(f"{chosen_dir}/*",load_func=lambda f: io.imread(f).astype(np.float64) / 255)
+        
+    
+        
+                # ------------------------------------------------------------------------------------------
+                # example with 2 images descriptors
+                # ------------------------------------------------------------------------------------------
+        
+                src, dest = pano_image_collection[0], pano_image_collection[1]
+                src_keypoints, src_descriptors = panoramafunc.find_keypoints(src)
+                dest_keypoints, dest_descriptors = panoramafunc.find_keypoints(dest)
+        
+                robust_transform, matches = panoramafunc.ransac_tr(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
+        
+                plots.plot_inliers(src, dest, src_keypoints, dest_keypoints, matches)
+        
+                # ------------------------------------------------------------------------------------------
+                # point and descriptors for all images pairs
+                # ------------------------------------------------------------------------------------------
+        
+                keypoints, descriptors = zip(*(panoramafunc.find_keypoints(img) for img in pano_image_collection))
+    
+                forward_transforms = tuple(panoramafunc.ransac_tr(sorc_kp, src_desc, dest_kp, dest_desc)
+                                            for sorc_kp, src_desc, dest_kp, dest_desc
+                                            in zip(keypoints[:-1], descriptors[:-1], keypoints[1:], descriptors[1:]))
+        
+                # ------------------------------------------------------------------------------------------
+                # Merge and find borders
+                # ------------------------------------------------------------------------------------------    
+        
+        
+        
+                simple_center_warps = panoramafunc.find_center_warps(forward_transforms)
+                corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, simple_center_warps)), axis= None)
+                min_coords, max_coords = panoramafunc.get_min_max_coords(corners)
+                central_img = pano_image_collection[ (len(pano_image_collection) - 1) // 2]
+        
+                plots.plot_warps(corners, min_coords=min_coords, max_coords=max_coords, img=central_img)
+    
+                # ------------------------------------------------------------------------------------------
+                # Get final wrap
+                # ------------------------------------------------------------------------------------------
+        
+                final_central_warps, output_shape = panoramafunc.get_final_center_warps(pano_image_collection, simple_center_warps)
+                corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, final_central_warps)), axis= None)
+        
+        
+                result_pano = panoramafunc.merge_final_pano(pano_image_collection, final_central_warps, output_shape)
+        
+                plots.plot_result(result_pano)
+        
+                # ------------------------------------------------------------------------------------------
+                # Get smoothed pano
+                # ------------------------------------------------------------------------------------------
+                
+                result_pano_smth = panoramafunc.gaussian_merging_pano(pano_image_collection, final_central_warps, output_shape)
+                      
+                plots.plot_result(result_pano_smth, title = "Smoothed pano")
+                
+                temp_dir_obj.cleanup()
+                if "taken_images" in st.session_state:
+                    del st.session_state['taken_images']
+                if st.button('Reset', key = 6):
+                    directory_path = temp_dir
+                    try:
+                        delete_files(directory_path)
+                    except:
+                        pass
+
+    with common_tab:
+        
+ 
+        chosen_dir = "panorama/tempDir"
+        if "camera_dis" not in st.session_state.keys():
+            st.session_state['camera_dis'] = False
+    
+    
+        upload_option = st.selectbox(
+       "How would you like to upload photos?",
+       ("Files", "Camera"),
+       index=1, key = 7)
+        
+        if 'time' not in st.session_state:
+            st.session_state['time'] =  str(int(time.time()))
+            #os.mkdir(f"panorama/{st.session_state['time']}")
+            #temp_folder = f"panorama/{st.session_state['time']}"
+        def find_imgs(folder):
+            files = os.listdir(folder)
+            images = [x for x in files if ".jpg" in x]
+            images.sort()
+            return images
+            
+            
+        if upload_option == "Camera":
+
+
+                
+            picture_com = st.camera_input("Take a picture", disabled=False, key = 8)
             if "image_counter" not in st.session_state:
                 st.session_state['image_counter'] = 0
 
@@ -271,124 +412,122 @@ elif selected == 'Image warp':
                 with open(os.path.join("panorama/tempDir",f"{str(int(time.time()))}.jpg"),"wb") as f: 
                     f.write(picture_com.getbuffer())         
                 st.session_state['image_counter'] += 1
-            if len(find_imgs('panorama/tempDir')) > 0:
 
-                if st.button('Show images'):
-                    columns = st.columns(len(find_imgs("panorama/tempDir")))
-                    for i, col in enumerate(columns):
-                        with col:
-                            st.image(f'panorama/tempDir/{find_imgs("panorama/tempDir")[i]}')
-                if st.button('Delete all'):
-                    directory_path = "panorama/tempDir"
-                    try:
-                        delete_files(directory_path)
-                    except:
-                        pass
             
-            
+                
+    
+        elif upload_option == "Files" :
+            uploaded_files = st.file_uploader("Upload images", accept_multiple_files=True, key = 41)
+            for picture in uploaded_files:
+                with open(os.path.join("panorama/tempDir",picture.name),"wb") as f: 
+                    f.write(picture.getbuffer())
 
-    elif upload_option == "Files" :
-        uploaded_files = st.file_uploader("Upload images", accept_multiple_files=True)
-        for picture in uploaded_files:
-            with open(os.path.join(temp_dir,picture.name),"wb") as f: 
-                f.write(picture.getbuffer())         
-            
+        st.subheader("Common photos")
+        st.write(f":blue[{len(find_imgs('panorama/tempDir'))}] :frame_with_picture:")
+                    
+        if len(find_imgs('panorama/tempDir')) > 0:
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-       st.subheader("Private photos")
-       st.write(f":red[{len(find_imgs(temp_dir))}] :frame_with_picture:")    
-    with col2:
-       st.subheader("Common photos")
-       st.write(f":blue[{len(find_imgs('panorama/tempDir'))}] :frame_with_picture:")
-
-
-    if len(find_imgs(chosen_dir)) >= 2:
-        c1, col_main, c3 = st.columns(3)
-        with c1:
-            pass
-        with col_main:
-            center_button = st.button('Lets warp!')
-        with c3:
-            pass
-        if center_button:
-            st.session_state['camera_dis'] = True
-            # ------------------------------------------------------------------------------------------
-            # get pano images
-            # ------------------------------------------------------------------------------------------
-      
-            # Create an ImageCollection from the uploaded images
-            pano_image_collection = io.ImageCollection(f"{chosen_dir}/*",load_func=lambda f: io.imread(f).astype(np.float64) / 255)
-    
-
-    
-            # ------------------------------------------------------------------------------------------
-            # example with 2 images descriptors
-            # ------------------------------------------------------------------------------------------
-    
-            src, dest = pano_image_collection[0], pano_image_collection[1]
-            src_keypoints, src_descriptors = panoramafunc.find_keypoints(src)
-            dest_keypoints, dest_descriptors = panoramafunc.find_keypoints(dest)
-    
-            robust_transform, matches = panoramafunc.ransac_tr(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
-    
-            plots.plot_inliers(src, dest, src_keypoints, dest_keypoints, matches)
-    
-            # ------------------------------------------------------------------------------------------
-            # point and descriptors for all images pairs
-            # ------------------------------------------------------------------------------------------
-    
-            keypoints, descriptors = zip(*(panoramafunc.find_keypoints(img) for img in pano_image_collection))
-
-            forward_transforms = tuple(panoramafunc.ransac_tr(sorc_kp, src_desc, dest_kp, dest_desc)
-                                        for sorc_kp, src_desc, dest_kp, dest_desc
-                                        in zip(keypoints[:-1], descriptors[:-1], keypoints[1:], descriptors[1:]))
-    
-            # ------------------------------------------------------------------------------------------
-            # Merge and find borders
-            # ------------------------------------------------------------------------------------------    
-    
-    
-    
-            simple_center_warps = panoramafunc.find_center_warps(forward_transforms)
-            corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, simple_center_warps)), axis= None)
-            min_coords, max_coords = panoramafunc.get_min_max_coords(corners)
-            central_img = pano_image_collection[ (len(pano_image_collection) - 1) // 2]
-    
-            plots.plot_warps(corners, min_coords=min_coords, max_coords=max_coords, img=central_img)
-
-            # ------------------------------------------------------------------------------------------
-            # Get final wrap
-            # ------------------------------------------------------------------------------------------
-    
-            final_central_warps, output_shape = panoramafunc.get_final_center_warps(pano_image_collection, simple_center_warps)
-            corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, final_central_warps)), axis= None)
-    
-    
-            result_pano = panoramafunc.merge_final_pano(pano_image_collection, final_central_warps, output_shape)
-    
-            plots.plot_result(result_pano)
-    
-            # ------------------------------------------------------------------------------------------
-            # Get smoothed pano
-            # ------------------------------------------------------------------------------------------
-    
-            img = pano_image_collection[0]
-    
-            result_pano_smth = panoramafunc.gaussian_merging_pano(pano_image_collection, final_central_warps, output_shape)
-    
-            plots.plot_result(result_pano_smth)
-            
-            temp_dir_obj.cleanup()
-            if "taken_images" in st.session_state:
-                del st.session_state['taken_images']
-            if st.button('Reset', key = 2):
-                directory_path = temp_dir
+            if st.button('Show images', key = 9):
+                columns = st.columns(len(find_imgs("panorama/tempDir")))
+                for i, col in enumerate(columns):
+                    with col:
+                        st.image(f'panorama/tempDir/{find_imgs("panorama/tempDir")[i]}')
+            if st.button('Delete all', key = 10):
+                directory_path = "panorama/tempDir"
                 try:
                     delete_files(directory_path)
                 except:
                     pass
+    
+        
+    
+
+
+    
+    
+        if len(find_imgs(chosen_dir)) >= 2:
+            c1, col_main, c3 = st.columns(3)
+            with c1:
+                pass
+            with col_main:
+                center_button = st.button('Lets warp!', key = 14)
+            with c3:
+                pass
+            if center_button:
+                st.session_state['camera_dis'] = True
+                # ------------------------------------------------------------------------------------------
+                # get pano images
+                # ------------------------------------------------------------------------------------------
+          
+                # Create an ImageCollection from the uploaded images
+                pano_image_collection = io.ImageCollection(f"{chosen_dir}/*",load_func=lambda f: io.imread(f).astype(np.float64) / 255)
+        
+    
+        
+                # ------------------------------------------------------------------------------------------
+                # example with 2 images descriptors
+                # ------------------------------------------------------------------------------------------
+        
+                src, dest = pano_image_collection[0], pano_image_collection[1]
+                src_keypoints, src_descriptors = panoramafunc.find_keypoints(src)
+                dest_keypoints, dest_descriptors = panoramafunc.find_keypoints(dest)
+        
+                robust_transform, matches = panoramafunc.ransac_tr(src_keypoints, src_descriptors, dest_keypoints, dest_descriptors, return_matches=True)
+        
+                plots.plot_inliers(src, dest, src_keypoints, dest_keypoints, matches)
+        
+                # ------------------------------------------------------------------------------------------
+                # point and descriptors for all images pairs
+                # ------------------------------------------------------------------------------------------
+        
+                keypoints, descriptors = zip(*(panoramafunc.find_keypoints(img) for img in pano_image_collection))
+    
+                forward_transforms = tuple(panoramafunc.ransac_tr(sorc_kp, src_desc, dest_kp, dest_desc)
+                                            for sorc_kp, src_desc, dest_kp, dest_desc
+                                            in zip(keypoints[:-1], descriptors[:-1], keypoints[1:], descriptors[1:]))
+        
+                # ------------------------------------------------------------------------------------------
+                # Merge and find borders
+                # ------------------------------------------------------------------------------------------    
+        
+        
+        
+                simple_center_warps = panoramafunc.find_center_warps(forward_transforms)
+                corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, simple_center_warps)), axis= None)
+                min_coords, max_coords = panoramafunc.get_min_max_coords(corners)
+                central_img = pano_image_collection[ (len(pano_image_collection) - 1) // 2]
+        
+                plots.plot_warps(corners, min_coords=min_coords, max_coords=max_coords, img=central_img)
+    
+                # ------------------------------------------------------------------------------------------
+                # Get final wrap
+                # ------------------------------------------------------------------------------------------
+        
+                final_central_warps, output_shape = panoramafunc.get_final_center_warps(pano_image_collection, simple_center_warps)
+                corners = np.flip(tuple(panoramafunc.get_corners(pano_image_collection, final_central_warps)), axis= None)
+        
+        
+                result_pano = panoramafunc.merge_final_pano(pano_image_collection, final_central_warps, output_shape)
+        
+                plots.plot_result(result_pano)
+        
+                # ------------------------------------------------------------------------------------------
+                # Get smoothed pano
+                # ------------------------------------------------------------------------------------------
+                
+                result_pano_smth = panoramafunc.gaussian_merging_pano(pano_image_collection, final_central_warps, output_shape)
+                      
+                plots.plot_result(result_pano_smth, title = "Smoothed pano")
+                
+                temp_dir_obj.cleanup()
+                if "taken_images" in st.session_state:
+                    del st.session_state['taken_images']
+                if st.button('Reset', key = 11):
+                    directory_path = temp_dir
+                    try:
+                        delete_files(directory_path)
+                    except:
+                        pass
 
 
 elif selected == 'Image generation':

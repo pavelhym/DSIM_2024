@@ -10,7 +10,7 @@ This project is composed of 3 parts:
 * Panorama stiching for more than 2 images
 * DCGAN training for cars images generation
 
-Currently the UI of project can be reached by this [link](https://signal.trplai.com/).
+Currently the UI of project can be reached by this [link](https://signal.trplai.com/). (works from 18:00)
 
 
 Data for voice classification is taken from [here](https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio).

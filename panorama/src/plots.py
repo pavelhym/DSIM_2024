@@ -72,12 +72,18 @@ def plot_warps(corners, output_shape=None, min_coords=None, max_coords=None, img
 
 
 
-def plot_result( result,  streamlit = True):
+def plot_result( result, title = None, streamlit = True):
+    
     plt.close()
+
     plt.figure(figsize=FIGSIZE)
     plt.imshow(result)
     plt.axis('off')
     plt.tight_layout()
+    if title == None:
+        pass
+    else:
+        plt.title(str(title))
     if streamlit:
         show_plot()
     else:
