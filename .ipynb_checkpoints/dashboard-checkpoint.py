@@ -130,23 +130,23 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # 1. as sidebar menu
 with st.sidebar:
-    selected = on_hover_tabs(tabName=["Welcome page","Voice emotion", "Image warp", "Image generation"], 
+    selected = on_hover_tabs(tabName=["Welcome page","Voice emotion", "Panorama", "Image generation"], 
                         iconName=['info','record_voice_over',  'palette', 'smart_toy'], default_choice=0)
 
 
 
 if (selected == 'Welcome page'):
-    st.markdown('<p style="font-family: Pragmatica; font-size: 75px;">Digital signal Project</p>', unsafe_allow_html=True)
+    st.markdown('<p style="font-family: Pragmatica; font-size: 75px;">DSIM 2024 Project</p>', unsafe_allow_html=True)
 
 
 
     st.markdown(
             """
-            ## Digital image and Signal processing :
+            ## Project's parts:
             **Voice emotion**
             - Detect the emotion of your voice
             
-            **Image wrap**
+            **Panorama**
             - Create panorama by yourself and look through steps
             - Choose common directory to uplad images from any device
             - Choose private directory to use only photos from this device
@@ -209,8 +209,8 @@ elif selected == 'Voice emotion':
             st.subheader(f"You are {detect(result_pano)}!")
 
 
-elif selected == 'Image warp':
-    st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Image warp online</p>', unsafe_allow_html=True)
+elif selected == 'Panorama':
+    st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Create panorama online</p>', unsafe_allow_html=True)
     #with tempfile.TemporaryDirectory() as temp_dir :
 
     private_tab, common_tab = st.tabs(["Private photos", "Common photos"])
@@ -281,7 +281,7 @@ elif selected == 'Image warp':
                 columns = st.columns(len(find_imgs(temp_dir)))
                 for i, col in enumerate(columns):
                     with col:
-                        st.image(f'panorama/tempDir/{find_imgs(temp_dir)[i]}')
+                        st.image(f'{temp_dir}/{find_imgs(temp_dir)[i]}')
             if st.button('Delete all', key = 4):
                 directory_path = temp_dir
                 try:
@@ -296,7 +296,7 @@ elif selected == 'Image warp':
             with c1:
                 pass
             with col_main:
-                center_button = st.button('Lets warp!', key = 5)
+                center_button = st.button('Lets go!', key = 5)
             with c3:
                 pass
             if center_button:
@@ -450,7 +450,7 @@ elif selected == 'Image warp':
             with c1:
                 pass
             with col_main:
-                center_button = st.button('Lets warp!', key = 14)
+                center_button = st.button('Lets go!', key = 14)
             with c3:
                 pass
             if center_button:
