@@ -24,3 +24,5 @@ keras
 tensorflow
 torch
 torchvision
+opencv-python
+optuna
