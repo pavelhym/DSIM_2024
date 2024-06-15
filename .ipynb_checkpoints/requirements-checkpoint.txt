@@ -24,3 +24,6 @@ keras
 tensorflow
 torch
 torchvision
+opencv-python
+ultralytics
+opencv-python-headless

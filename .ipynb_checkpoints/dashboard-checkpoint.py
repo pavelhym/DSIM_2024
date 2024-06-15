@@ -30,13 +30,18 @@ from voice.audiofunc import detect
 
 from gan.ganfunc import show_gan_imgs
 
+from coins.coinfunc import detect_yolo 
+
 import os
 import shutil
 import traceback
 
 import time
- 
 
+import cv2
+import matplotlib.pyplot as plt
+import ultralytics
+from ultralytics import YOLO
 
 from skimage import io
 import numpy as np
@@ -73,6 +78,9 @@ def delete_files(directory_path):
             print(f"Error deleting {file_path}: {e}")
 
 
+
+if "yolo_model" not in st.session_state:
+    session_state['yolo_model'] = model = YOLO('coins/weights/best.pt')
 
 
 #change tab fontsize
@@ -124,14 +132,18 @@ hide_streamlit_style = """
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
 
-
+def find_imgs(folder):
+    files = os.listdir(folder)
+    images = [x for x in files if ".jpg" in x]
+    images.sort()
+    return images
 
 
 
 # 1. as sidebar menu
 with st.sidebar:
-    selected = on_hover_tabs(tabName=["Welcome page","Voice emotion", "Panorama", "Image generation"], 
-                        iconName=['info','record_voice_over',  'palette', 'smart_toy'], default_choice=0)
+    selected = on_hover_tabs(tabName=["Welcome page","Voice emotion", "Panorama", "Coin detection", "Image generation"], 
+                        iconName=['info','record_voice_over',  'palette',  'coin', 'smart_toy'], default_choice=0)
 
 
 
@@ -209,6 +221,48 @@ elif selected == 'Voice emotion':
             st.subheader(f"You are {detect(result_pano)}!")
 
 
+elif selected == 'Coin detection':
+    st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Detect coins</p>', unsafe_allow_html=True)
+
+    images_upl, web_camera = st.tabs(["Uploaded images", "Web camera"])
+
+    with images_upl:
+        
+        temp_dir_obj = tempfile.TemporaryDirectory()
+        temp_dir = temp_dir_obj.name
+        chosen_dir = temp_dir
+        if "camera_dis" not in st.session_state.keys():
+            st.session_state['camera_dis'] = False
+        
+        if 'time' not in st.session_state:
+            st.session_state['time'] =  str(int(time.time()))
+            #os.mkdir(f"panorama/{st.session_state['time']}")
+            #temp_folder = f"panorama/{st.session_state['time']}"
+
+
+        uploaded_files = st.file_uploader("Upload images", accept_multiple_files=True, key = 495)
+        for picture in uploaded_files:
+            with open(os.path.join(temp_dir,picture.name),"wb") as f: 
+                f.write(picture.getbuffer())         
+                
+    
+        if len(find_imgs(chosen_dir)) >= 1:
+            c1, col_main, c3 = st.columns(3)
+            with c1:
+                pass
+            with col_main:
+                center_button = st.button('Lets go!', key = 5)
+            with c3:
+                pass
+        if center_button:
+            st.session_state['camera_dis'] = True
+            # ------------------------------------------------------------------------------------------
+            # get pano images
+            # ------------------------------------------------------------------------------------------
+            images_to_proceed = find_imgs(chosen_dir)
+            for one_img in images_to_proceed:
+                # Create an ImageCollection from the uploaded images
+                detect_yolo(f"{chosen_dir}/{one_img}", session_state['yolo_model'])
 elif selected == 'Panorama':
     st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Create panorama online</p>', unsafe_allow_html=True)
     #with tempfile.TemporaryDirectory() as temp_dir :

@@ -25,4 +25,5 @@ tensorflow
 torch
 torchvision
 opencv-python
-optuna
+ultralytics
+opencv-python-headless
