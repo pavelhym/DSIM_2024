@@ -115,8 +115,11 @@ def objective(trial):
     # Suggest values for the hyperparameters
     param1 = trial.suggest_int('param1', 20, 150)
     param2 = trial.suggest_int('param2', 10, 50)
-    minRadius = trial.suggest_int('minRadius', 50, 150)
-    maxRadius = trial.suggest_int('maxRadius', 0, 60)
+    minRadius = trial.suggest_int('minRadius', 50, 100)
+    maxRadius = trial.suggest_int('maxRadius', 60, 150)
+
+    if maxRadius <= minRadius:
+        raise optuna.exceptions.TrialPruned()
     
     # Compute the value of the custom function
     return coin_finder(param1, param2, minRadius, maxRadius)
