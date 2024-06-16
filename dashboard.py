@@ -30,7 +30,7 @@ from voice.audiofunc import detect
 
 from gan.ganfunc import show_gan_imgs
 
-from coins.coinfunc import detect_yolo 
+from coins.coinfunc import detect_yolo, play_stored_video
 
 import os
 import shutil
@@ -80,7 +80,7 @@ def delete_files(directory_path):
 
 
 if "yolo_model" not in st.session_state:
-    session_state['yolo_model'] = model = YOLO('coins/weights/best.pt')
+    st.session_state['yolo_model'] = model = YOLO('coins/weights/best.pt')
 
 
 #change tab fontsize
@@ -138,6 +138,9 @@ def find_imgs(folder):
     images.sort()
     return images
 
+def find_vids(folder):
+    files = os.listdir(folder)
+    return files
 
 
 # 1. as sidebar menu
@@ -254,15 +257,44 @@ elif selected == 'Coin detection':
                 center_button = st.button('Lets go!', key = 5)
             with c3:
                 pass
-        if center_button:
-            st.session_state['camera_dis'] = True
-            # ------------------------------------------------------------------------------------------
-            # get pano images
-            # ------------------------------------------------------------------------------------------
-            images_to_proceed = find_imgs(chosen_dir)
-            for one_img in images_to_proceed:
-                # Create an ImageCollection from the uploaded images
-                detect_yolo(f"{chosen_dir}/{one_img}", session_state['yolo_model'])
+            if center_button:
+                st.session_state['camera_dis'] = True
+                # ------------------------------------------------------------------------------------------
+                # get pano images
+                # ------------------------------------------------------------------------------------------
+                images_to_proceed = find_imgs(chosen_dir)
+                for one_img in images_to_proceed:
+                    # Create an ImageCollection from the uploaded images
+                    detect_yolo(f"{chosen_dir}/{one_img}", st.session_state['yolo_model'])
+    with web_camera:
+
+        temp_dir_vid = tempfile.TemporaryDirectory()
+        temp_dir_v = temp_dir_vid.name
+        uploaded_video = st.file_uploader("Upload images",type=["mp4"], accept_multiple_files=False, key = 4951)
+        if uploaded_video is not None:
+            # Save the uploaded video
+            video_path = os.path.join(temp_dir_v, uploaded_video.name)
+            with open(video_path, "wb") as f:
+                f.write(uploaded_video.getbuffer())    
+        
+            confidence = float(st.sidebar.slider(
+                "Select Model Confidence", 25, 100, 40)) / 100
+
+            c1, col_main, c3 = st.columns(3)
+            with c1:
+                pass
+            with col_main:
+                center_button = st.button('Lets go!', key = 556)
+            with c3:
+                pass
+            if center_button:
+                # ------------------------------------------------------------------------------------------
+                # get pano images
+                # ------------------------------------------------------------------------------------------
+
+                play_stored_video(confidence, st.session_state['yolo_model'],video_path)
+
+        
 elif selected == 'Panorama':
     st.markdown('<p style="font-family: Pragmatica; font-size: 55px;">Create panorama online</p>', unsafe_allow_html=True)
     #with tempfile.TemporaryDirectory() as temp_dir :
