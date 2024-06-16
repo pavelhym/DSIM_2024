@@ -27,3 +27,4 @@ torchvision
 opencv-python
 ultralytics
 opencv-python-headless
+streamlit_webrtc
