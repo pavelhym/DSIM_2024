@@ -15,7 +15,9 @@ Currently the UI of project can be reached by this [link](https://signal.trplai.
 
 
 Data for voice classification is taken from [here](https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio).
+
 Data for coin detection and classification is taken from [here](https://universe.roboflow.com/hlcv2023finalproject/small-object-detection-for-euro-coins/dataset/5) and [here](https://www.kaggle.com/datasets/wanderdust/coin-images).
+
 Data of car images for DCGAN is taken from [here](https://www.kaggle.com/datasets/jessicali9530/stanford-cars-dataset).
 
 ## Installation
